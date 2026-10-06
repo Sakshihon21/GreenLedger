@@ -1,0 +1,9 @@
+import enum
+
+
+class UserRole(str, enum.Enum):
+    ADMIN = "ADMIN"
+    ORGANIZATION = "ORGANIZATION"
+    BUYER = "BUYER"
+    SELLER = "SELLER"
+    MONITORING_AUTHORITY = "MONITORING_AUTHORITY"
