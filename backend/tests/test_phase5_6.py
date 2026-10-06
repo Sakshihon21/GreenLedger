@@ -1,44 +1,12 @@
 import pytest
-from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
-from app.main import app
-from app.db.database import Base
-from app.db.session import get_db
 from app.core.security import create_access_token
 from app.models.enums import UserRole
 from app.services.auth_service import register_new_user, get_user_by_email
 from app.schemas.user import UserRegister
 
-# In-memory SQLite database for phase 5 & 6 testing
-SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool
-)
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-Base.metadata.create_all(bind=engine)
-
-
-def override_get_db():
-    try:
-        db = TestingSessionLocal()
-        yield db
-    finally:
-        db.close()
-
-
-app.dependency_overrides[get_db] = override_get_db
-client = TestClient(app)
-
 
 @pytest.fixture
-def auth_headers():
-    # Seed user in test database if not present
-    db = TestingSessionLocal()
+def auth_headers(db):
     if not get_user_by_email(db, "org@greenledger.org"):
         register_new_user(db, UserRegister(
             name="Green Enterprise Org",
@@ -46,13 +14,12 @@ def auth_headers():
             password="GreenLedger123!",
             role=UserRole.ORGANIZATION
         ))
-    db.close()
 
     token = create_access_token(subject="org@greenledger.org", role=UserRole.ORGANIZATION.value)
     return {"Authorization": f"Bearer {token}"}
 
 
-def test_device_registration(auth_headers):
+def test_device_registration(client, auth_headers):
     """Test registering a new IoT device."""
     payload = {
         "device_id": "ESP32-TEST-001",
@@ -67,7 +34,7 @@ def test_device_registration(auth_headers):
     assert data["data"]["device_id"] == "ESP32-TEST-001"
 
 
-def test_list_devices(auth_headers):
+def test_list_devices(client, auth_headers):
     """Test fetching all registered IoT devices."""
     response = client.get("/api/v1/devices", headers=auth_headers)
     assert response.status_code == 200
@@ -76,7 +43,7 @@ def test_list_devices(auth_headers):
     assert isinstance(data["data"], list)
 
 
-def test_sensor_reading_ingestion(auth_headers):
+def test_sensor_reading_ingestion(client, auth_headers):
     """Test ingesting a valid environmental sensor payload."""
     payload = {
         "device_id": "ESP32-TEST-001",
@@ -92,7 +59,7 @@ def test_sensor_reading_ingestion(auth_headers):
     assert data["data"]["co2_ppm"] == 450.5
 
 
-def test_invalid_sensor_reading_rejected(auth_headers):
+def test_invalid_sensor_reading_rejected(client, auth_headers):
     """Test out-of-bounds CO2 ppm payload is rejected with 422 Unprocessable Entity."""
     payload = {
         "device_id": "ESP32-TEST-001",
@@ -102,7 +69,7 @@ def test_invalid_sensor_reading_rejected(auth_headers):
     assert response.status_code == 422
 
 
-def test_dashboard_summary(auth_headers):
+def test_dashboard_summary(client, auth_headers):
     """Test dashboard summary metrics calculation."""
     response = client.get("/api/v1/dashboard/summary", headers=auth_headers)
     assert response.status_code == 200

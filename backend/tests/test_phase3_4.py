@@ -1,35 +1,5 @@
 import pytest
-from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
-from app.main import app
-from app.db.database import Base
-from app.db.session import get_db
 from app.core.security import get_password_hash, verify_password, create_access_token, decode_access_token
-
-# In-memory SQLite database with StaticPool for test persistence
-SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool
-)
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-Base.metadata.create_all(bind=engine)
-
-
-def override_get_db():
-    try:
-        db = TestingSessionLocal()
-        yield db
-    finally:
-        db.close()
-
-
-app.dependency_overrides[get_db] = override_get_db
-client = TestClient(app)
 
 
 def test_password_hashing():
@@ -51,7 +21,7 @@ def test_jwt_token_operations():
     assert payload["role"] == "ORGANIZATION"
 
 
-def test_user_registration_api():
+def test_user_registration_api(client):
     """Test user registration endpoint POST /api/v1/auth/register."""
     payload = {
         "name": "Eco Solutions Inc",
@@ -68,7 +38,7 @@ def test_user_registration_api():
     assert data["data"]["role"] == "ORGANIZATION"
 
 
-def test_duplicate_email_registration_fails():
+def test_duplicate_email_registration_fails(client):
     """Test registering an existing email returns 409 Conflict."""
     payload = {
         "name": "Duplicate User",
@@ -82,7 +52,7 @@ def test_duplicate_email_registration_fails():
     assert "already exists" in data["detail"].lower()
 
 
-def test_user_login_api():
+def test_user_login_api(client):
     """Test user login endpoint POST /api/v1/auth/login."""
     payload = {
         "email": "contact@ecosolutions.org",
@@ -97,7 +67,7 @@ def test_user_login_api():
     assert data["data"]["user"]["email"] == "contact@ecosolutions.org"
 
 
-def test_get_current_user_me_endpoint():
+def test_get_current_user_me_endpoint(client):
     """Test authenticated profile endpoint GET /api/v1/auth/me."""
     login_res = client.post("/api/v1/auth/login", json={
         "email": "contact@ecosolutions.org",

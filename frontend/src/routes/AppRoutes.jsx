@@ -18,6 +18,9 @@ import AuditLogsView from '../pages/Dashboard/AuditLogsView';
 import UsersView from '../pages/Dashboard/UsersView';
 import OrganizationsView from '../pages/Dashboard/OrganizationsView';
 import PlantationsView from '../pages/Dashboard/PlantationsView';
+import ReductionView from '../pages/Dashboard/ReductionView';
+import ReportsView from '../pages/Dashboard/ReportsView';
+import CreditsView from '../pages/Dashboard/CreditsView';
 import { useAuth } from '../context/AuthContext';
 import RoleGuard from '../components/RoleGuard';
 
@@ -70,10 +73,26 @@ const AppRoutes = () => {
           }
         />
         <Route
+          path="reduction"
+          element={
+            <RoleGuard allowedRoles={['ORGANIZATION', 'SELLER', 'ADMIN']}>
+              <ReductionView />
+            </RoleGuard>
+          }
+        />
+        <Route
           path="plantations"
           element={
             <RoleGuard allowedRoles={['ORGANIZATION', 'ADMIN']}>
               <PlantationsView />
+            </RoleGuard>
+          }
+        />
+        <Route
+          path="credits"
+          element={
+            <RoleGuard allowedRoles={['ORGANIZATION', 'SELLER', 'MONITORING_AUTHORITY', 'ADMIN']}>
+              <CreditsView />
             </RoleGuard>
           }
         />
@@ -118,6 +137,14 @@ const AppRoutes = () => {
           element={
             <RoleGuard allowedRoles={['MONITORING_AUTHORITY', 'ADMIN']}>
               <AnomaliesView />
+            </RoleGuard>
+          }
+        />
+        <Route
+          path="reports"
+          element={
+            <RoleGuard allowedRoles={['ORGANIZATION', 'MONITORING_AUTHORITY', 'ADMIN']}>
+              <ReportsView />
             </RoleGuard>
           }
         />
