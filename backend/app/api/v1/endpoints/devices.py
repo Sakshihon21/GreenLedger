@@ -6,7 +6,7 @@ from app.api.deps import get_current_user, require_roles
 from app.models.user import User
 from app.models.enums import UserRole
 from app.schemas.device import DeviceCreate, DeviceResponse
-from app.services.device_service import register_device, get_devices_by_org
+from app.services.device_service import register_device, get_devices_by_org, delete_device as remove_device
 
 router = APIRouter()
 
@@ -46,3 +46,23 @@ def list_devices(
         "message": "IoT devices retrieved successfully.",
         "data": [DeviceResponse.model_validate(d) for d in devices]
     }
+
+
+@router.delete("/{device_identifier}", summary="Delete an IoT device")
+def delete_device(
+    device_identifier: str,
+    current_user: User = Depends(require_roles([UserRole.ORGANIZATION, UserRole.SELLER, UserRole.ADMIN])),
+    db: Session = Depends(get_db)
+):
+    """
+    Delete an IoT device and its associated telemetry.
+    Restricted to ORGANIZATION, SELLER, and ADMIN roles.
+    """
+    org_id = current_user.organization_id or 1
+    is_admin = current_user.role == UserRole.ADMIN
+    remove_device(db, device_identifier, org_id, is_admin=is_admin)
+    return {
+        "success": True,
+        "message": f"IoT Device '{device_identifier}' deleted successfully."
+    }
+

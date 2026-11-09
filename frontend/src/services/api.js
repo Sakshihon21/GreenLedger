@@ -28,12 +28,22 @@ api.interceptors.response.use(
   (error) => {
     let message = 'An unexpected error occurred. Please try again.';
     if (error.response) {
-      if (error.response.data && error.response.data.message) {
-        message = error.response.data.message;
-      } else if (error.response.status === 401) {
-        message = 'Invalid email or password.';
-      } else if (error.response.status === 409) {
-        message = 'An account with this email already exists.';
+      const data = error.response.data;
+      if (data) {
+        if (typeof data.detail === 'string') {
+          message = data.detail;
+        } else if (Array.isArray(data.detail) && data.detail.length > 0) {
+          message = data.detail.map(d => d.msg || 'Invalid field').join(', ');
+        } else if (data.message) {
+          message = data.message;
+        }
+      }
+      if (message === 'An unexpected error occurred. Please try again.') {
+        if (error.response.status === 401) {
+          message = 'Invalid email or password.';
+        } else if (error.response.status === 409) {
+          message = 'An account with this email already exists.';
+        }
       }
     } else if (error.request) {
       message = 'Unable to connect to GreenLedger backend server. Please check connection.';

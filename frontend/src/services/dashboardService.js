@@ -15,6 +15,12 @@ export const createDevice = async (deviceData) => {
   return response.data;
 };
 
+export const deleteDevice = async (deviceId) => {
+  const response = await api.delete(`/devices/${encodeURIComponent(deviceId)}`);
+  return response.data;
+};
+
+
 export const getSensorReadings = async (limit = 50) => {
   const response = await api.get(`/sensors/readings?limit=${limit}`);
   return response.data;

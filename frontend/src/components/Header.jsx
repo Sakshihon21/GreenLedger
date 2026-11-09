@@ -10,7 +10,7 @@ const Header = ({ onOpenSidebar, title, onRefresh, isRefreshing }) => {
       <div className="flex items-center space-x-4">
         <button
           onClick={onOpenSidebar}
-          className="lg:hidden p-2 text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100"
+          className="lg:hidden p-2 text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100 transition"
           aria-label="Open sidebar"
         >
           <Menu className="w-5 h-5" />

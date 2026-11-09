@@ -81,3 +81,20 @@ def authenticate_user(db: Session, credentials: UserLogin) -> Optional[User]:
             detail="User account is deactivated."
         )
     return user
+
+
+def reset_user_password(db: Session, email: str, new_password: str) -> User:
+    """
+    Resets the password for an existing user account.
+    """
+    user = get_user_by_email(db, email)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No account found with this email address."
+        )
+    user.password_hash = get_password_hash(new_password)
+    db.commit()
+    db.refresh(user)
+    return user
+

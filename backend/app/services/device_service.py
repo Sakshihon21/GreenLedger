@@ -44,3 +44,32 @@ def register_device(db: Session, device_in: DeviceCreate, organization_id: int) 
     db.commit()
     db.refresh(device)
     return device
+
+
+def delete_device(db: Session, identifier: str, organization_id: int, is_admin: bool = False) -> IoTDevice:
+    """
+    Delete an IoT device by hardware device_id or database integer ID.
+    Enforces organization ownership unless the user is an admin.
+    """
+    query = db.query(IoTDevice)
+    if identifier.isdigit():
+        device = query.filter((IoTDevice.id == int(identifier)) | (IoTDevice.device_id == identifier)).first()
+    else:
+        device = query.filter(IoTDevice.device_id == identifier).first()
+
+    if not device:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"IoT Device with identifier '{identifier}' not found."
+        )
+
+    if not is_admin and device.organization_id != organization_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to delete this device."
+        )
+
+    db.delete(device)
+    db.commit()
+    return device
+

@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.db.session import get_db
-from app.schemas.user import UserRegister, UserLogin, UserResponse
-from app.services.auth_service import register_new_user, authenticate_user
+from app.schemas.user import UserRegister, UserLogin, UserResponse, PasswordResetRequest
+from app.services.auth_service import register_new_user, authenticate_user, reset_user_password
 from app.core.security import create_access_token
 from app.api.deps import get_current_user
 from app.models.user import User
@@ -46,6 +46,21 @@ def login(credentials: UserLogin, db: Session = Depends(get_db)):
             "access_token": access_token,
             "token_type": "bearer",
             "user": user_data
+        }
+    }
+
+
+@router.post("/reset-password", summary="Reset user password")
+def reset_password(payload: PasswordResetRequest, db: Session = Depends(get_db)):
+    """
+    Reset password for an existing account.
+    """
+    user = reset_user_password(db, payload.email, payload.new_password)
+    return {
+        "success": True,
+        "message": "Password has been successfully updated. You can now log in.",
+        "data": {
+            "email": user.email
         }
     }
 

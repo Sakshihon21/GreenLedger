@@ -108,8 +108,8 @@ const Sidebar = ({ isOpen, onClose }) => {
         {/* Brand Header */}
         <div className="h-16 px-6 flex items-center justify-between border-b border-slate-800">
           <div className="flex items-center space-x-3">
-            <div className="w-9 h-9 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-xl flex items-center justify-center">
-              <Leaf className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-xl bg-white p-1 flex items-center justify-center shadow-md shadow-black/20 shrink-0">
+              <img src="/logo-1.png" alt="GreenLedger Logo" className="w-full h-full object-contain" />
             </div>
             <div>
               <span className="font-extrabold text-white text-lg tracking-tight">GreenLedger</span>

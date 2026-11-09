@@ -78,3 +78,24 @@ def test_dashboard_summary(client, auth_headers):
     assert "active_devices" in data["data"]
     assert "avg_co2_ppm" in data["data"]
     assert "tracked_emissions_kg" in data["data"]
+
+
+def test_delete_device(client, auth_headers):
+    """Test deleting an IoT device."""
+    payload = {
+        "device_id": "ESP32-DELETE-ME",
+        "device_name": "Temporary Sensor",
+        "location": "Warehouse C",
+    }
+    create_res = client.post("/api/v1/devices", json=payload, headers=auth_headers)
+    assert create_res.status_code == 201
+
+    # Delete device by device_id
+    del_res = client.delete("/api/v1/devices/ESP32-DELETE-ME", headers=auth_headers)
+    assert del_res.status_code == 200
+    assert del_res.json()["success"] is True
+
+    # Confirm 404 on deleting again
+    del_res2 = client.delete("/api/v1/devices/ESP32-DELETE-ME", headers=auth_headers)
+    assert del_res2.status_code == 404
+
